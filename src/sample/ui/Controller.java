@@ -1,9 +1,15 @@
 package sample.ui;
 
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import sample.logic.DivisorCounter;
 import sample.logic.Result;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Controller {
 
@@ -30,7 +36,7 @@ public class Controller {
 
     @FXML
     public void initialize() {
-        progressBar.setProgress(0.5);
+        progressBar.setProgress(0.0);
         progressLabel.setText("");
         resultLabel.setText("");
 
@@ -46,16 +52,21 @@ public class Controller {
         Integer minimum = Integer.parseInt(txtMinimum.getText());
         Integer maximum = Integer.parseInt(txtMaximum.getText());
 
-        progressBar.setProgress(0);
         startButton.setDisable(true);
         stopButton.setDisable(false);
         resultLabel.setText("");
 
-        DivisorCounter counter = new DivisorCounter();
-        Result result = counter.calculate(minimum, maximum);
-        resultLabel.setText("The number " + result.getNumber() + " has " + result.getDivisorCounter() + " divisors!");
+        DivisorCounter counter = new DivisorCounter(minimum, maximum);
 
-        progressBar.setProgress(1);
+        progressBar.progressProperty().bind(counter.progressProperty());
+
+        counter.valueProperty().addListener((observable, oldValue, result) -> {
+            resultLabel.setText("The number " + result.getNumber() + " has " + result.getDivisorCounter() + " divisors!");
+        });
+
+        ExecutorService es = Executors.newCachedThreadPool();
+        es.execute(counter);
+
         startButton.setDisable(false);
         stopButton.setDisable(true);
     }
